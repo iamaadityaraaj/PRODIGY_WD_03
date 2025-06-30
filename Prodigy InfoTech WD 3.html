@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Square Clash</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Cinzel', serif;
+    }
+    body {
+      margin: 0;
+      padding: 2rem;
+      background-color: #cbe8f1;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .frame {
+      width: 350px;
+      background: rgba(255,255,255,0.65);
+      backdrop-filter: blur(12px);
+      border-radius: 18px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      padding: 2rem;
+      text-align: center;
+    }
+    .title {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .toggle-set {
+      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+    }
+    .toggle-set label {
+      margin: 0 10px;
+      cursor: pointer;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+    .slot {
+      width: 90px;
+      height: 90px;
+      font-size: 2.8rem;
+      font-weight: bold;
+      background-color: rgba(255,255,255,0.7);
+      border: 2px solid #222;
+      border-radius: 10px;
+      color: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      animation: pop 0.3s ease;
+      transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+    .slot:hover {
+      background-color: rgba(255,255,255,0.85);
+      transform: scale(1.05);
+    }
+    .slot:active {
+      transform: scale(0.92);
+    }
+    .tracker {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+    }
+    .reboot {
+      padding: 10px 22px;
+      background-color: #5dc6eb;
+      color: white;
+      border: none;
+      font-size: 1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+    .reboot:hover {
+      background-color: #40b8e0;
+      transform: scale(1.05);
+    }
+    @keyframes pop {
+      from {
+        transform: scale(0.6);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+    @media (max-width: 400px) {
+      .slot {
+        width: 70px;
+        height: 70px;
+        font-size: 2.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <div class="title">Tic Square Clash</div>
+    <div class="toggle-set">
+      <label><input type="radio" name="match" value="dual" checked> Dual Play</label>
+      <label><input type="radio" name="match" value="bot"> Vs Bot</label>
+    </div>
+    <div id="zone" class="grid"></div>
+    <div id="update" class="tracker">X begins</div>
+    <button class="reboot" onclick="restart()">New Round</button>
+  </div>
+
+  <script>
+    const zone = document.getElementById("zone")
+    const update = document.getElementById("update")
+    let field = Array(9).fill("")
+    let token = "X"
+    let active = true
+    let setting = "dual"
+
+    document.querySelectorAll('input[name="match"]').forEach(opt => {
+      opt.addEventListener("change", e => {
+        setting = e.target.value
+        restart()
+      })
+    })
+
+    function restart() {
+      field = Array(9).fill("")
+      token = "X"
+      active = true
+      update.textContent = "X begins"
+      draw()
+    }
+
+    function draw() {
+      zone.innerHTML = ""
+      field.forEach((mark, idx) => {
+        const spot = document.createElement("div")
+        spot.classList.add("slot")
+        spot.innerText = mark
+        spot.addEventListener("click", () => play(idx))
+        zone.appendChild(spot)
+      })
+    }
+
+    function play(idx) {
+      if (!active || field[idx] !== "") return
+      field[idx] = token
+      draw()
+      if (winCheck(token)) {
+        update.textContent = `${token} is victorious!`
+        active = false
+        return
+      }
+      if (!field.includes("")) {
+        update.textContent = "No more moves"
+        active = false
+        return
+      }
+      token = token === "X" ? "O" : "X"
+      update.textContent = `${token}'s turn`
+      if (setting === "bot" && token === "O") {
+        setTimeout(autoPlay, 450)
+      }
+    }
+
+    function autoPlay() {
+      let options = field.map((val, i) => val === "" ? i : null).filter(v => v !== null)
+      let choice = options[Math.floor(Math.random() * options.length)]
+      play(choice)
+    }
+
+    function winCheck(player) {
+      let paths = [
+        [0,1,2],[3,4,5],[6,7,8],
+        [0,3,6],[1,4,7],[2,5,8],
+        [0,4,8],[2,4,6]
+      ]
+      return paths.some(set => set.every(i => field[i] === player))
+    }
+
+    draw()
+  </script>
+</body>
+</html>
